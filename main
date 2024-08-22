@@ -1,0 +1,566 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+
+struct Medicamento
+{
+  int codigo;
+  char nome[30];
+  float preco;
+  int estoque;
+};
+
+typedef struct Medicamento medicamento;
+
+
+void menuAdmin()
+{
+  printf("\nBem vindo ao modo admin!\n");
+  printf("\nEscolha uma opção:\n");
+  printf("1 - Cadastar medicamentos\n");
+  printf("2 - Listar medicamentos\n");
+  printf("3 - Buscar medicamento\n");
+  printf("4 - Quantidade medicamentos\n");
+  printf("5 - Excluir um medicamento\n");
+  printf("6 - Editar um medicamento\n");
+  printf("7 - Medicamentos com o estoque acabando\n");
+  printf("8 - Cadastrar promoção\n");
+  printf("0 - Sair\n");
+  printf("===================\n");
+}
+
+
+void menuClient()
+{
+  printf("\nSeja bem-vindo a nossa farmácia!\n");
+  printf("\nEscolha uma opção:\n");
+  printf("1 - Comprar medicamentos\n");
+  printf("2 - Listar medicamentos\n");
+  printf("3 - Buscar medicamentos\n");
+  printf("4 - Quantidade de medicamentos\n");
+  printf("5 - Medicamentos que cabem no seu bolso!\n");
+  printf("6 - Buscar medicamentos em promoção\n");
+  printf("0 - Sair\n");
+  printf("===================\n");
+}
+
+
+void cadastrar()
+{
+  FILE *file = fopen("pharma.b", "ab");
+  Medicamento a;
+  printf("Informe os dados do medicamento na ordem: Codigo Nome Preco e Estoque\n");
+  scanf("%d %s %f %d", &a.codigo, a.nome, &a.preco, &a.estoque);
+  fwrite(&a, sizeof(Medicamento), 1, file);
+  fclose(file);
+}
+
+
+void cadastrarPromocao()
+{
+  FILE *file = fopen("promocao.b", "ab");
+  int a;
+  printf("Informe o código do medicamentos em promoção:\n");
+  scanf("%d", &a);
+  fwrite(&a, sizeof(int), 1, file);
+  fclose(file);
+}
+
+
+void buscar(int cod)
+{
+  FILE *file = fopen("pharma.b", "rb");
+  Remedio a;
+  int entrou = 0;
+  while (fread(&a, sizeof(Medicamento), 1, file))
+  {
+    if (a.codigo == cod)
+    {
+      printf("\nNome: %s\n", a.nome);
+      printf("- Codigo: %d\n", a.codigo);
+      printf("- Preco: %.2f\n", a.preco);
+      printf("- Quantidade em estoque: %d\n", a.estoque);
+      entrou = 1;
+    }
+  }
+  if (entrou == 0)
+  {
+    printf("Medicamento não encontrado\n");
+  }
+  fclose(file);
+}
+
+
+void buscarPromocao()
+{
+  FILE *file = fopen("promocao.b", "rb");
+  int a;
+  printf("Medicamentos em promoção:\n");
+  while (fread(&a, sizeof(int), 1, file))
+  {
+    buscar(a);
+  }
+  fclose(file);
+}
+
+
+void listar()
+{
+  FILE *file = fopen("pharma.b", "rb");
+  Medicamento a;
+  while (fread(&a, sizeof(Medicamento), 1, file))
+  {
+    printf("\nNome: %s\n", a.nome);
+    printf("- Codigo: %d\n", a.codigo);
+    printf("- Preco: %.2f\n", a.preco);
+    printf("- Quantidade em estoque: %d\n", a.estoque);
+  }
+  fclose(file);
+}
+
+
+int tamanho()
+{
+  FILE *file = fopen("pharma.b", "rb");
+  Medicamento a;
+  int cont = 0;
+  while (fread(&a, sizeof(Medicamento), 1, file))
+  {
+    cont++;
+  }
+  fclose(file);
+  return cont;
+}
+
+
+void estoqueAcabando()
+{
+  FILE *file = fopen("pharma.b", "rb");
+  Medicamento a;
+  int entrou = 0;
+  printf("Medicamentos com o estoque acabando: \n");
+  while (fread(&a, sizeof(Medicamento), 1, file))
+  {
+    if (a.estoque < 50)
+    {
+      printf("\nNome: %s\n", a.nome);
+      printf("- Codigo: %d\n", a.codigo);
+      printf("- Quantidade em estoque: %d\n", a.estoque);
+      entrou++;
+    }
+  }
+  if (entrou == 0)
+  {
+    printf("Estoque cheio, nenhum medicamento com menos de 50 unidades no estoque.\n");
+  }
+
+  fclose(file);
+}
+
+
+void excluir(int cod)
+{
+  int n = tamanho();
+  Medicamento v[n];
+  FILE *file = fopen("pharma.b", "rb");
+  int i = 0;
+  while (fread(&v[i], sizeof(Medicamento), 1, file))
+  {
+    i++;
+  }
+  fclose(file);
+  file = fopen("pharma.b", "wb");
+  for (i = 0; i < n; i++)
+  {
+    if (v[i].codigo != cod)
+    {
+      fwrite(&v[i], sizeof(Medicamento), 1, file);
+    }
+  }
+  fclose(file);
+}
+
+
+void editar(int cod)
+{
+  int n = tamanho();
+  Medicamento v[n];
+  FILE *file = fopen("pharma.b", "rb");
+  int i = 0;
+  while (fread(&v[i], sizeof(Medicamento), 1, file))
+  {
+    i++;
+  }
+  fclose(file);
+  file = fopen("pharma.b", "wb");
+  for (i = 0; i < n; i++)
+  {
+    if (v[i].codigo == cod)
+    {
+      int option;
+      printf("Escolha uma opçao:\n");
+      printf("1 - Editar preco\n");
+      printf("Qualquer outro numero - Editar estoque\n");
+      scanf("%d", &option);
+      if (option == 1)
+      {
+        float price;
+        printf("Informe o novo preco:\n");
+        scanf("%f", &price);
+        v[i].preco = price;
+        printf("Preco atualizado: %.2f\n", v[i].preco);
+      }
+      else
+      {
+        int stock;
+        printf("Informe o novo estoque:\n");
+        scanf("%i", &stock);
+        v[i].estoque = stock;
+        printf("Estoque atualizado: %d\n", v[i].estoque);
+      }
+    }
+
+    fwrite(&v[i], sizeof(Medicamento), 1, file);
+  }
+  fclose(file);
+}
+
+
+#define MAX_EMAIL_LENGTH 80
+
+
+int verificarEmailExistente(const char *email)
+{
+  FILE *arquivo = fopen("emails.txt", "r");
+  if (arquivo == NULL)
+  {
+    return 0; 
+  }
+  char linha[MAX_EMAIL_LENGTH];
+  while (fgets(linha, MAX_EMAIL_LENGTH, arquivo) != NULL)
+  {
+    
+    linha[strcspn(linha, "\n")] = 0;
+    if (strcmp(linha, email) == 0)
+    {
+      fclose(arquivo);
+      return 1; 
+    }
+  }
+  fclose(arquivo);
+  return 0; 
+}
+
+
+int verificarEmail(const char *email)
+{
+  if (strlen(email) >= MAX_EMAIL_LENGTH)
+  {
+    return 0; 
+  }
+  char *posArroba = strchr(email, '@');
+  if (posArroba == NULL)
+  {
+    return 0; 
+  }
+  if (verificarEmailExistente(email))
+  {
+    return 0; 
+  }
+  return 1; 
+}
+
+int email()
+{
+  char email[MAX_EMAIL_LENGTH];
+  int valido = 0;
+
+  while (!valido)
+  {
+    printf("Digite seu email: ");
+    fgets(email, MAX_EMAIL_LENGTH, stdin);
+    
+    email[strcspn(email, "\n")] = 0;
+
+    if (verificarEmail(email))
+    {
+      valido = 1;
+    }
+    else
+    {
+      printf("Email invalido ou ja cadastrado. Por favor, tente novamente.\n");
+    }
+  }
+
+  
+  FILE *arquivo = fopen("emails.txt", "a");
+  if (arquivo == NULL)
+  {
+    printf("Erro ao abrir o arquivo para escrita.\n");
+    return 1;
+  }
+  fprintf(arquivo, "%s\n", email);
+  fclose(arquivo);
+
+  printf("Email cadastrado com sucesso!\n");
+
+  return 0;
+}
+
+
+struct Login
+{
+  char email[81];
+  int id;
+  int senha;
+};
+
+typedef struct Login Login;
+
+int login()
+{
+  printf("\n---------------------\n");
+  printf("INFORMES PARA REUDISMAM\n");
+  printf("As funções estão divididas em dois modos: Admin Mode e Client Mode, cada uma com suas funções especificas\n");
+  printf("Credenciais para entrar nos modos:\n");
+  printf("- Email valido e ainda não cadastrado\n");
+  printf("- Para entrar no Adm Mode e Id = 1 e Senha = 11\n");
+  printf("- Para entrar no Client Mode e Id = 2 e Senha = 22\n");
+  printf("---------------------\n");
+  Login user;
+  int verificado = email();
+
+  while (verificado == 0)
+  {
+    printf("Informe o id: ");
+    scanf("%d", &user.id);
+    printf("Informe a senha: ");
+    scanf("%d", &user.senha);
+
+    if (user.id == 1 && user.senha == 11)
+    {
+      verificado = 1;
+      return 1; 
+    }
+    else if (user.id == 2 && user.senha == 22)
+    {
+      verificado = 1;
+      return 2; 
+    }
+    else
+    {
+      printf("Id ou senha incorretos, tente novamente!\n");
+    }
+  }
+
+  return 0;
+}
+
+void admMode()
+{
+  int op;
+  menuAdmin();
+  scanf("%d", &op);
+  while (op != 0)
+  {
+    if (op == 1)
+    {
+      cadastrar();
+    }
+    else if (op == 2)
+    {
+      listar();
+    }
+    else if (op == 3)
+    {
+      int cod;
+      printf("Informe o codigo da mercadoria:\n");
+      scanf("%d", &cod);
+      buscar(cod);
+    }
+    else if (op == 4)
+    {
+      int n = tamanho();
+      printf("Quantidade de medicamentos na farmácia: %d\n", n);
+    }
+    else if (op == 5)
+    {
+      int cod;
+      printf("Informe o codigo do medicamento que você deseja excluir:\n");
+      scanf("%d", &cod);
+      excluir(cod);
+    }
+    else if (op == 6)
+    {
+      int cod;
+      printf("Informe o codigo do medicamento que você deseja editar:\n");
+      scanf("%d", &cod);
+      editar(cod);
+    }
+    else if (op == 7)
+    {
+      estoqueAcabando();
+    }
+    else if (op == 8)
+    {
+      cadastrarPromocao();
+    }
+    menuAdmin();
+    scanf("%d", &op);
+  }
+}
+
+
+float carrinhoDeCompras(int cod, int quant)
+{
+  
+  int n = tamanho();
+  Medicamento v[n];
+  FILE *file = fopen("pharma.b", "rb");
+  int i = 0;
+  while (fread(&v[i], sizeof(Medicamento), 1, file))
+  {
+    i++;
+  }
+  fclose(file);
+  file = fopen("pharma.b", "wb");
+  for (i = 0; i < n; i++)
+  {
+    if (v[i].codigo == cod)
+    {
+      v[i].estoque = v[i].estoque - quant;
+    }
+
+    fwrite(&v[i], sizeof(Medicamento), 1, file);
+  }
+  fclose(file);
+  
+  file = fopen("pharma.b", "rb");
+  Medicamento a;
+  int entrou = 0;
+  while (fread(&a, sizeof(Medicamento), 1, file))
+  {
+    if (a.codigo == cod)
+    {
+      printf("\nNome: %s\n", a.nome);
+      printf("- Codigo: %d\n", a.codigo);
+      printf("- Preco: %.2f\n", a.preco);
+      printf("- Quantidade em estoque: %d\n", a.estoque + quant); // Somei de volta a quantidade do estoque pois antes de finalizar a comprar eu já retirei do pharma.b
+      entrou = 1;
+      return a.preco * quant;
+    }
+  }
+  if (entrou == 0)
+  {
+    printf("Codigo de medicamento incorreto\n");
+  }
+  fclose(file);
+
+  return 0;
+}
+
+
+void medicamentosBaratos(float x)
+{
+  FILE *file = fopen("pharma.b", "rb");
+  Medicamento a;
+  int entrou = 0;
+  while (fread(&a, sizeof(Medicamento), 1, file))
+  {
+    if (a.preco <= x)
+    {
+      printf("\nNome: %s\n", a.nome);
+      printf("- Codigo: %d\n", a.codigo);
+      printf("- Preco: %.2f\n", a.preco);
+      printf("- Quantidade em estoque: %d\n", a.estoque);
+      entrou = 1;
+    }
+  }
+  if (entrou == 0)
+  {
+    printf("Não ha medicamento com um preco menor ou igual ao do que o informado\n");
+  }
+  fclose(file);
+}
+
+void clientMode()
+{
+  int op;
+  menuClient();
+  scanf("%d", &op);
+  while (op != 0)
+  {
+    if (op == 1)
+    {
+      int qnt;
+      printf("Quantos itens voce deseja comprar?\n");
+      scanf("%d", &qnt);
+      float cart = 0;
+      for (int i = 0; i < qnt; i++)
+      {
+        int cod, qnt;
+        printf("Informe o codigo do medicamento: ");
+        scanf("%d", &cod);
+        printf("Informe a quantidade: ");
+        scanf("%d", &qnt);
+        cart += carrinhoDeCompras(cod, qnt);
+      }
+      printf("Total da compra foi: %.2f\n", cart);
+    }
+    else if (op == 2)
+    {
+      listar();
+    }
+    else if (op == 3)
+    {
+      int cod;
+      printf("Informe o codigo da mercadoria:\n");
+      scanf("%d", &cod);
+      buscar(cod);
+    }
+    else if (op == 4)
+    {
+      int n = tamanho();
+      printf("Quantidade de medicamento na farmácia: %d\n", n);
+    }
+    else if (op == 5)
+    {
+      float x;
+      printf("Informe o quanto voce esta disposto a pagar e descubra os medicamentos que cabem no seu bolso: ");
+      scanf("%f", &x);
+      medicamentosBaratos(x);
+    }
+    else if (op == 6)
+    {
+      buscarPromocao();
+    }
+
+    menuClient();
+    scanf("%d", &op);
+  }
+}
+
+
+void mensagemDeBoasVindas()
+{
+  printf("Bem-vindo a FarJondas, onde saúde e bem-estar se encontram em cada visita! Aqui, nossa missão sempre será cuidar de você e de toda sua família com dedicação e respeito. Entre em nossa loja virtual e descubra uma ampla variedade de produtos farmacêuticos de qualidade, aliados a um atendimento personalizado que faz toda a diferença. Na FarJondas, sua saúde é nossa principal prioridade. Juntos, vamos trilhar o caminho para uma vida mais saudável e feliz. Seja bem-vindo a sua nova casa de saúde e bem-estar!\n");
+  printf("\nFarJondas: Vitalizando sua vida, medicando seu bem-estar!\n");
+}
+
+int main()
+{
+  mensagemDeBoasVindas();
+  int checkout = login();
+  if (checkout == 1)
+  {
+    admMode();
+  }
+  else
+  {
+    clientMode();
+  }
+
+  return 0;
+}
